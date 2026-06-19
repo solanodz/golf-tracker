@@ -1,0 +1,55 @@
+{
+  "club": "Jockey Club de Tucumán",
+  "courses": [
+    {
+      "name": "Country",
+      "par": 71,
+      "totalYards": 6910,
+      "holes": [
+        { "number": 1, "par": 5, "hcp": 5, "yards": 591 },
+        { "number": 2, "par": 3, "hcp": 17, "yards": 179 },
+        { "number": 3, "par": 4, "hcp": 7, "yards": 405 },
+        { "number": 4, "par": 4, "hcp": 3, "yards": 441 },
+        { "number": 5, "par": 5, "hcp": 9, "yards": 502 },
+        { "number": 6, "par": 3, "hcp": 15, "yards": 196 },
+        { "number": 7, "par": 4, "hcp": 11, "yards": 421 },
+        { "number": 8, "par": 4, "hcp": 13, "yards": 348 },
+        { "number": 9, "par": 4, "hcp": 1, "yards": 414 },
+        { "number": 10, "par": 5, "hcp": 6, "yards": 574 },
+        { "number": 11, "par": 4, "hcp": 4, "yards": 452 },
+        { "number": 12, "par": 4, "hcp": 12, "yards": 373 },
+        { "number": 13, "par": 3, "hcp": 18, "yards": 214 },
+        { "number": 14, "par": 4, "hcp": 14, "yards": 387 },
+        { "number": 15, "par": 4, "hcp": 8, "yards": 411 },
+        { "number": 16, "par": 3, "hcp": 16, "yards": 183 },
+        { "number": 17, "par": 4, "hcp": 10, "yards": 384 },
+        { "number": 18, "par": 4, "hcp": 2, "yards": 435 }
+      ]
+    },
+    {
+      "name": "Alpa Sumaj",
+      "par": 71,
+      "totalYards": 6499,
+      "holes": [
+        { "number": 1, "par": 4, "hcp": 3, "yards": 442 },
+        { "number": 2, "par": 3, "hcp": 13, "yards": 148 },
+        { "number": 3, "par": 5, "hcp": 7, "yards": 515 },
+        { "number": 4, "par": 4, "hcp": 9, "yards": 385 },
+        { "number": 5, "par": 4, "hcp": 5, "yards": 392 },
+        { "number": 6, "par": 3, "hcp": 15, "yards": 165 },
+        { "number": 7, "par": 4, "hcp": 1, "yards": 455 },
+        { "number": 8, "par": 4, "hcp": 17, "yards": 283 },
+        { "number": 9, "par": 4, "hcp": 11, "yards": 350 },
+        { "number": 10, "par": 4, "hcp": 8, "yards": 423 },
+        { "number": 11, "par": 4, "hcp": 2, "yards": 398 },
+        { "number": 12, "par": 4, "hcp": 4, "yards": 425 },
+        { "number": 13, "par": 3, "hcp": 14, "yards": 182 },
+        { "number": 14, "par": 5, "hcp": 12, "yards": 507 },
+        { "number": 15, "par": 4, "hcp": 6, "yards": 444 },
+        { "number": 16, "par": 3, "hcp": 16, "yards": 164 },
+        { "number": 17, "par": 4, "hcp": 18, "yards": 341 },
+        { "number": 18, "par": 5, "hcp": 10, "yards": 480 }
+      ]
+    }
+  ]
+}
