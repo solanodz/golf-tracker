@@ -31,6 +31,14 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Importa el repo en [Vercel](https://vercel.com/new).
+2. En **Project → Settings → Environment Variables**, agregá estas variables para **Production**, **Preview** y **Development**:
+   - `NEXT_PUBLIC_SUPABASE_URL` — API URL del proyecto (ej. `https://xxxx.supabase.co`)
+   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — publishable key (`sb_publishable_...`) desde Supabase → Settings → API Keys
+3. **Redeploy** el proyecto (Deployments → ⋯ → Redeploy) para que tome las variables.
+4. En **Supabase → Authentication → URL Configuration**, agregá la URL de callback de producción:
+   - `https://tu-dominio.vercel.app/auth/callback`
+   - También podés incluir `http://localhost:3000/auth/callback` para desarrollo local.
+5. En **Supabase → Authentication → Providers → Email**, dejá activo **Confirm email** para que el correo se envíe solo al registrarse (no en cada login).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Sin esas variables, el proxy de Next.js falla con *"Your project's URL and Key are required to create a Supabase client!"*.

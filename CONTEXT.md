@@ -5,7 +5,7 @@ Aplicación para registrar rondas de golf y analizar estadísticas de juego en e
 ## Language
 
 **Jugador**:
-Una persona con cuenta en la app que registra sus propias rondas. Solo puede ver sus propios datos; no accede a rondas ni estadísticas de otros jugadores. Se autentica con magic link de Supabase (email sin contraseña). El registro es abierto: cualquiera con el link de la app puede crear su cuenta.
+Una persona con cuenta en la app que registra sus propias rondas. Solo puede ver sus propios datos; no accede a rondas ni estadísticas de otros jugadores. Se registra con email y contraseña; Supabase envía un solo email de confirmación al crear la cuenta. Los ingresos posteriores son solo con email y contraseña, sin más emails. El registro es abierto: cualquiera con el link de la app puede crear su cuenta.
 _Avoid_: Usuario, player, account
 
 **Perfil**:

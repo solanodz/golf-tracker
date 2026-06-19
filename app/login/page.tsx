@@ -16,13 +16,14 @@ export default async function LoginPage({
         </p>
         <h1 className="mt-2 text-3xl font-bold text-zinc-900">Ingresá</h1>
         <p className="mt-2 text-zinc-600">
-          Te enviamos un link mágico a tu email. Sin contraseña.
+          Al registrarte recibís un email de confirmación. Después ingresás solo
+          con email y contraseña.
         </p>
       </div>
 
       {authError ? (
         <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-          No pudimos validar el link. Pedí uno nuevo.
+          No pudimos validar la sesión. Volvé a ingresar.
         </p>
       ) : null}
 
