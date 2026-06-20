@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ScoreLabelText } from "@/components/round/score-label";
+import { parseLocalizedInteger } from "@/lib/parse-number";
 
 const stepperCardClass =
   "gap-0 overflow-hidden rounded-xl border-2 border-emerald-700 bg-transparent p-0 shadow-none ring-0";
@@ -40,12 +41,15 @@ export function ScoreInput({
 
           <div className="flex min-w-0 flex-1 flex-col items-center justify-center bg-card py-3">
             <Input
-              type="number"
-              min={1}
-              max={15}
+              type="text"
+              inputMode="numeric"
               value={value}
               onChange={(event) => {
-                const next = Number(event.target.value);
+                const raw = event.target.value;
+                if (raw !== "" && !/^-?\d*[.,]?\d*$/.test(raw.trim())) {
+                  return;
+                }
+                const next = parseLocalizedInteger(raw);
                 if (!Number.isNaN(next) && next >= 1 && next <= 15) {
                   onChange(next);
                 }
@@ -100,12 +104,15 @@ export function PuttsInput({
               <Minus />
             </button>
             <Input
-              type="number"
-              min={0}
-              max={10}
+              type="text"
+              inputMode="numeric"
               value={value}
               onChange={(event) => {
-                const next = Number(event.target.value);
+                const raw = event.target.value;
+                if (raw !== "" && !/^-?\d*[.,]?\d*$/.test(raw.trim())) {
+                  return;
+                }
+                const next = parseLocalizedInteger(raw);
                 if (!Number.isNaN(next) && next >= 0 && next <= 10) {
                   onChange(next);
                 }

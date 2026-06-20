@@ -51,7 +51,7 @@ export async function updateSession(request: NextRequest) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("first_name, last_name, handicap")
+    .select("first_name, last_name, handicap, club_id")
     .eq("id", userId)
     .single();
 

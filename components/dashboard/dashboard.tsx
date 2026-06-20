@@ -374,6 +374,7 @@ export function Dashboard({ rounds }: { rounds: DashboardRound[] }) {
               label: p.label,
               gross: p.gross,
               net: p.net,
+              handicapUsed: p.handicapUsed,
             }))}
           />
 

@@ -2,17 +2,26 @@
 
 import { useState } from "react";
 
+import { ClubPicker } from "@/components/profile/club-picker";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { Club, Profile } from "@/lib/database.types";
+import { parseLocalizedNumber } from "@/lib/parse-number";
 import { createClient } from "@/lib/supabase/client";
-import type { Profile } from "@/lib/database.types";
 
-export function ProfileForm({ profile }: { profile: Profile }) {
+export function ProfileForm({
+  profile,
+  clubs,
+}: {
+  profile: Profile;
+  clubs: Pick<Club, "id" | "name">[];
+}) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [clubId, setClubId] = useState(profile.club_id ?? "");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -24,10 +33,16 @@ export function ProfileForm({ profile }: { profile: Profile }) {
     const firstName = String(formData.get("first_name") ?? "").trim();
     const lastName = String(formData.get("last_name") ?? "").trim();
     const handicapRaw = String(formData.get("handicap") ?? "").trim();
-    const handicap = Number(handicapRaw);
+    const handicap = parseLocalizedNumber(handicapRaw);
 
-    if (!firstName || !lastName || Number.isNaN(handicap) || handicap < 0) {
-      setError("Completá nombre, apellido y un HCP válido.");
+    if (
+      !firstName ||
+      !lastName ||
+      !clubId ||
+      Number.isNaN(handicap) ||
+      handicap < 0
+    ) {
+      setError("Completá nombre, apellido, club y un HCP válido.");
       setPending(false);
       return;
     }
@@ -39,6 +54,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
         first_name: firstName,
         last_name: lastName,
         handicap,
+        club_id: clubId,
       })
       .eq("id", profile.id);
 
@@ -53,27 +69,29 @@ export function ProfileForm({ profile }: { profile: Profile }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="first_name">Nombre</Label>
-        <Input
-          id="first_name"
-          name="first_name"
-          required
-          defaultValue={profile.first_name ?? ""}
-          className="h-12"
-        />
-      </div>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="first_name">Nombre</Label>
+          <Input
+            id="first_name"
+            name="first_name"
+            required
+            defaultValue={profile.first_name ?? ""}
+            className="h-12"
+          />
+        </div>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="last_name">Apellido</Label>
-        <Input
-          id="last_name"
-          name="last_name"
-          required
-          defaultValue={profile.last_name ?? ""}
-          className="h-12"
-        />
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="last_name">Apellido</Label>
+          <Input
+            id="last_name"
+            name="last_name"
+            required
+            defaultValue={profile.last_name ?? ""}
+            className="h-12"
+          />
+        </div>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -81,13 +99,17 @@ export function ProfileForm({ profile }: { profile: Profile }) {
         <Input
           id="handicap"
           name="handicap"
-          type="number"
+          type="text"
           required
-          min={0}
-          step={0.1}
+          inputMode="decimal"
           defaultValue={profile.handicap ?? ""}
-          className="h-12"
+          className="h-12 sm:max-w-[8rem]"
         />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label>Club</Label>
+        <ClubPicker clubs={clubs} value={clubId} onValueChange={setClubId} />
       </div>
 
       {error ? (
@@ -105,7 +127,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
 
       <Button
         type="submit"
-        disabled={pending}
+        disabled={pending || clubs.length === 0}
         className="h-12 bg-emerald-700 hover:bg-emerald-800"
       >
         {pending ? "Guardando..." : "Guardar cambios"}

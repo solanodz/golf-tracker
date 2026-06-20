@@ -13,6 +13,7 @@ export type EvolutionPoint = {
   date: string;
   label: string;
   courseName: string;
+  handicapUsed: number;
   gross: number;
   net: number;
   girPct: number | null;
@@ -89,6 +90,7 @@ export function buildEvolutionData(rounds: DashboardRound[]): EvolutionPoint[] {
           month: "short",
         }),
         courseName: round.courseName,
+        handicapUsed: Number(round.handicap_used),
         ...metrics,
       };
     })

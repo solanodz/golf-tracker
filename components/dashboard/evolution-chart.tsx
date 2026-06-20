@@ -1,7 +1,7 @@
 "use client";
 
 import { TrendingDown, TrendingUp } from "lucide-react";
-import { useId, useMemo, type ReactNode } from "react";
+import { useId, useMemo, type ComponentProps, type ReactNode } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import {
@@ -39,6 +39,33 @@ const scoreChartConfig = {
   gross: { label: "Gross", color: "var(--chart-1)" },
   net: { label: "Neto", color: "var(--chart-2)" },
 } satisfies ChartConfig;
+
+const SCORE_TOOLTIP_ORDER = { gross: 0, net: 1 } as const;
+
+function ScoreChartTooltipContent(
+  props: ComponentProps<typeof ChartTooltipContent>,
+) {
+  const payload = props.payload?.slice().sort((a, b) => {
+    const aKey = String(a.dataKey ?? "");
+    const bKey = String(b.dataKey ?? "");
+    return (
+      (SCORE_TOOLTIP_ORDER[aKey as keyof typeof SCORE_TOOLTIP_ORDER] ?? 99) -
+      (SCORE_TOOLTIP_ORDER[bKey as keyof typeof SCORE_TOOLTIP_ORDER] ?? 99)
+    );
+  });
+
+  const handicapUsed = payload?.[0]?.payload?.handicapUsed as number | undefined;
+
+  return (
+    <ChartTooltipContent
+      {...props}
+      payload={payload}
+      labelFormatter={(label) =>
+        handicapUsed != null ? `${label} · HCP ${handicapUsed}` : String(label)
+      }
+    />
+  );
+}
 
 function ChartXAxis() {
   return (
@@ -108,11 +135,19 @@ function tightYDomain(
     : [Math.floor(lo * 10) / 10, Math.ceil(hi * 10) / 10];
 }
 
-function GradientDefs({ id, colorVar }: { id: string; colorVar: string }) {
+function GradientDefs({
+  id,
+  colorVar,
+  maxOpacity = 0.7,
+}: {
+  id: string;
+  colorVar: string;
+  maxOpacity?: number;
+}) {
   return (
     <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stopColor={colorVar} stopOpacity={0.7} />
-      <stop offset="50%" stopColor={colorVar} stopOpacity={0.2} />
+      <stop offset="0%" stopColor={colorVar} stopOpacity={maxOpacity} />
+      <stop offset="50%" stopColor={colorVar} stopOpacity={maxOpacity * 0.28} />
       <stop offset="78%" stopColor={colorVar} stopOpacity={0} />
     </linearGradient>
   );
@@ -121,16 +156,23 @@ function GradientDefs({ id, colorVar }: { id: string; colorVar: string }) {
 function ChartLegendInline({
   items,
 }: {
-  items: { label: string; color: string }[];
+  items: { label: string; color: string; dashed?: boolean }[];
 }) {
   return (
     <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
       {items.map((item) => (
-        <span key={item.label} className="flex items-center gap-1">
-          <span
-            className="size-2 rounded-full"
-            style={{ backgroundColor: item.color }}
-          />
+        <span key={item.label} className="flex items-center gap-1.5">
+          {item.dashed ? (
+            <span
+              className="inline-block w-4 border-t-2 border-dashed"
+              style={{ borderColor: item.color }}
+            />
+          ) : (
+            <span
+              className="inline-block w-4 border-t-2"
+              style={{ borderColor: item.color }}
+            />
+          )}
           {item.label}
         </span>
       ))}
@@ -360,7 +402,7 @@ export function EvolutionChart({
 export function ScoreEvolutionChart({
   data,
 }: {
-  data: { label: string; gross: number; net: number }[];
+  data: { label: string; gross: number; net: number; handicapUsed: number }[];
 }) {
   const chartId = useId().replace(/:/g, "");
   const fillGrossId = `fillGross-${chartId}`;
@@ -394,7 +436,7 @@ export function ScoreEvolutionChart({
         <ChartLegendInline
           items={[
             { label: "Gross", color: "var(--chart-1)" },
-            { label: "Neto", color: "var(--chart-2)" },
+            { label: "Neto", color: "var(--chart-2)", dashed: true },
           ]}
         />
       }
@@ -418,23 +460,22 @@ export function ScoreEvolutionChart({
             domain={yDomain}
             tickFormatter={(value) => String(Math.round(value))}
           />
-          <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-          <defs>
-            <GradientDefs id={fillGrossId} colorVar="var(--color-gross)" />
-            <GradientDefs id={fillNetId} colorVar="var(--color-net)" />
-          </defs>
-          <Area
-            dataKey="gross"
-            type="monotone"
-            baseValue={yDomain[0]}
-            fill={`url(#${fillGrossId})`}
-            fillOpacity={1}
-            stroke="var(--color-gross)"
-            strokeWidth={2.5}
-            dot={{ r: 3, fill: "var(--color-gross)", strokeWidth: 0 }}
-            activeDot={{ r: 4, strokeWidth: 0 }}
-            isAnimationActive={false}
+          <ChartTooltip
+            cursor={false}
+            content={(props) => <ScoreChartTooltipContent {...props} />}
           />
+          <defs>
+            <GradientDefs
+              id={fillGrossId}
+              colorVar="var(--color-gross)"
+              maxOpacity={0.55}
+            />
+            <GradientDefs
+              id={fillNetId}
+              colorVar="var(--color-net)"
+              maxOpacity={0.35}
+            />
+          </defs>
           <Area
             dataKey="net"
             type="monotone"
@@ -443,8 +484,31 @@ export function ScoreEvolutionChart({
             fillOpacity={1}
             stroke="var(--color-net)"
             strokeWidth={2.5}
-            dot={{ r: 3, fill: "var(--color-net)", strokeWidth: 0 }}
+            strokeDasharray="6 4"
+            dot={{
+              r: 3,
+              fill: "var(--color-net)",
+              stroke: "var(--card)",
+              strokeWidth: 1.5,
+            }}
             activeDot={{ r: 4, strokeWidth: 0 }}
+            isAnimationActive={false}
+          />
+          <Area
+            dataKey="gross"
+            type="monotone"
+            baseValue={yDomain[0]}
+            fill={`url(#${fillGrossId})`}
+            fillOpacity={1}
+            stroke="var(--color-gross)"
+            strokeWidth={3}
+            dot={{
+              r: 3.5,
+              fill: "var(--color-gross)",
+              stroke: "var(--card)",
+              strokeWidth: 1.5,
+            }}
+            activeDot={{ r: 5, strokeWidth: 0 }}
             isAnimationActive={false}
           />
         </AreaChart>

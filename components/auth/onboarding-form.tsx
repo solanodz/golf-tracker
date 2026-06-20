@@ -3,16 +3,24 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { ClubPicker } from "@/components/profile/club-picker";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { Club } from "@/lib/database.types";
+import { parseLocalizedNumber } from "@/lib/parse-number";
 import { createClient } from "@/lib/supabase/client";
 
-export function OnboardingForm() {
+export function OnboardingForm({
+  clubs,
+}: {
+  clubs: Pick<Club, "id" | "name">[];
+}) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [clubId, setClubId] = useState(clubs.length === 1 ? clubs[0].id : "");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -23,10 +31,16 @@ export function OnboardingForm() {
     const firstName = String(formData.get("first_name") ?? "").trim();
     const lastName = String(formData.get("last_name") ?? "").trim();
     const handicapRaw = String(formData.get("handicap") ?? "").trim();
-    const handicap = Number(handicapRaw);
+    const handicap = parseLocalizedNumber(handicapRaw);
 
-    if (!firstName || !lastName || Number.isNaN(handicap) || handicap < 0) {
-      setError("Completá nombre, apellido y un HCP válido.");
+    if (
+      !firstName ||
+      !lastName ||
+      !clubId ||
+      Number.isNaN(handicap) ||
+      handicap < 0
+    ) {
+      setError("Completá nombre, apellido, club y un HCP válido.");
       setPending(false);
       return;
     }
@@ -48,6 +62,7 @@ export function OnboardingForm() {
         first_name: firstName,
         last_name: lastName,
         handicap,
+        club_id: clubId,
       })
       .eq("id", user.id);
 
@@ -86,16 +101,19 @@ export function OnboardingForm() {
       </div>
 
       <div className="flex flex-col gap-2">
+        <Label>Club</Label>
+        <ClubPicker clubs={clubs} value={clubId} onValueChange={setClubId} />
+      </div>
+
+      <div className="flex flex-col gap-2">
         <Label htmlFor="handicap">HCP</Label>
         <Input
           id="handicap"
           name="handicap"
-          type="number"
+          type="text"
           required
-          min={0}
-          step={0.1}
           inputMode="decimal"
-          placeholder="12.4"
+          placeholder="12,4"
           className="h-12"
         />
       </div>
@@ -108,7 +126,7 @@ export function OnboardingForm() {
 
       <Button
         type="submit"
-        disabled={pending}
+        disabled={pending || clubs.length === 0}
         className="mt-2 h-12 bg-emerald-700 text-base font-semibold hover:bg-emerald-800"
       >
         {pending ? "Guardando..." : "Empezar"}

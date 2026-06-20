@@ -2,12 +2,13 @@ import type { Profile } from "@/lib/database.types";
 
 export function isProfileComplete(profile: Pick<
   Profile,
-  "first_name" | "last_name" | "handicap"
+  "first_name" | "last_name" | "handicap" | "club_id"
 > | null): boolean {
   if (!profile) return false;
   return Boolean(
     profile.first_name?.trim() &&
       profile.last_name?.trim() &&
+      profile.club_id &&
       profile.handicap !== null &&
       profile.handicap >= 0,
   );

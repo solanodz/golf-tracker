@@ -38,6 +38,10 @@ import {
   type RoundWithDetails,
 } from "@/lib/golf";
 import { checkNewPersonalBest, roundGross } from "@/lib/best-rounds";
+import {
+  isPartialLocalizedNumber,
+  parseLocalizedNumber,
+} from "@/lib/parse-number";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -124,7 +128,7 @@ export function RoundFlow({
     setPending(true);
     setError(null);
 
-    const handicapUsed = Number(handicap);
+    const handicapUsed = parseLocalizedNumber(handicap);
     if (Number.isNaN(handicapUsed) || handicapUsed < 0) {
       setError("Ingresá un HCP válido.");
       setPending(false);
@@ -390,11 +394,15 @@ export function RoundFlow({
             <Label htmlFor="handicap">HCP</Label>
             <Input
               id="handicap"
-              type="number"
-              min={0}
-              step={0.1}
+              type="text"
+              inputMode="decimal"
               value={handicap}
-              onChange={(event) => setHandicap(event.target.value)}
+              onChange={(event) => {
+                const next = event.target.value;
+                if (next === "" || isPartialLocalizedNumber(next)) {
+                  setHandicap(next);
+                }
+              }}
               className="h-12"
             />
           </div>

@@ -84,13 +84,17 @@ create table public.profiles (
   first_name  text,
   last_name   text,
   handicap    numeric(4, 1) check (handicap is null or handicap >= 0),
+  club_id     uuid references public.clubs (id) on delete restrict,
   avatar_url  text,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
 
-comment on table public.profiles is 'Perfil del jugador. first_name, last_name y handicap se completan en el onboarding.';
+comment on table public.profiles is 'Perfil del jugador. first_name, last_name, handicap y club_id se completan en el onboarding.';
 comment on column public.profiles.handicap is 'HCP index del jugador. Acepta decimales (ej. 12.4).';
+comment on column public.profiles.club_id is 'Club del que el jugador es socio.';
+
+create index profiles_club_id_idx on public.profiles (club_id);
 
 -- -----------------------------------------------------------------------------
 -- Rondas
