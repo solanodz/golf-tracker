@@ -9,6 +9,12 @@ import { Label } from "@/components/ui/label";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ScoreLabelText } from "@/components/round/score-label";
 
+const stepperCardClass =
+  "gap-0 overflow-hidden rounded-xl border-2 border-emerald-700 bg-transparent p-0 shadow-none ring-0";
+
+const stepperButtonClass =
+  "inline-flex h-auto min-w-[4.5rem] shrink-0 items-center justify-center rounded-none border-0 bg-emerald-700 px-6 font-bold text-white outline-none transition-colors hover:bg-emerald-800 focus-visible:outline-none [&_svg]:stroke-[2.5]";
+
 export function ScoreInput({
   par,
   value,
@@ -22,18 +28,17 @@ export function ScoreInput({
     <div className="flex flex-col gap-3">
       <Label>Score</Label>
 
-      <div className="flex items-center gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon-lg"
-          onClick={() => onChange(Math.max(1, value - 1))}
-        >
-          <Minus />
-        </Button>
+      <Card className={stepperCardClass}>
+        <CardContent className="flex items-stretch p-0">
+          <button
+            type="button"
+            onClick={() => onChange(Math.max(1, value - 1))}
+            className={`${stepperButtonClass} rounded-l-[10px] border-r border-emerald-800 py-5`}
+          >
+            <Minus />
+          </button>
 
-        <Card className="flex-1">
-          <CardContent className="flex flex-col items-center py-2">
+          <div className="flex min-w-0 flex-1 flex-col items-center justify-center bg-card py-3">
             <Input
               type="number"
               min={1}
@@ -45,25 +50,24 @@ export function ScoreInput({
                   onChange(next);
                 }
               }}
-              className="h-auto border-0 bg-transparent text-center text-2xl font-bold shadow-none focus-visible:ring-0"
+              className="h-auto min-h-0 w-full border-0 bg-transparent py-0 text-center !text-4xl !font-bold shadow-none focus-visible:ring-0 md:!text-4xl"
             />
             <ScoreLabelText
               score={value}
               par={par}
               className="text-xs text-muted-foreground"
             />
-          </CardContent>
-        </Card>
+          </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          size="icon-lg"
-          onClick={() => onChange(Math.min(15, value + 1))}
-        >
-          <Plus />
-        </Button>
-      </div>
+          <button
+            type="button"
+            onClick={() => onChange(Math.min(15, value + 1))}
+            className={`${stepperButtonClass} rounded-r-[10px] border-l border-emerald-800 py-5`}
+          >
+            <Plus />
+          </button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -86,37 +90,37 @@ export function PuttsInput({
           hoyo en uno el único tiro fue desde el tee.
         </p>
       ) : (
-        <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-lg"
-            onClick={() => onChange(Math.max(0, value - 1))}
-          >
-            <Minus />
-          </Button>
-          <Input
-            type="number"
-            min={0}
-            max={10}
-            value={value}
-            onChange={(event) => {
-              const next = Number(event.target.value);
-              if (!Number.isNaN(next) && next >= 0 && next <= 10) {
-                onChange(next);
-              }
-            }}
-            className="h-12 flex-1 text-center text-xl font-bold"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="icon-lg"
-            onClick={() => onChange(Math.min(10, value + 1))}
-          >
-            <Plus />
-          </Button>
-        </div>
+        <Card className={stepperCardClass}>
+          <CardContent className="flex items-stretch p-0">
+            <button
+              type="button"
+              onClick={() => onChange(Math.max(0, value - 1))}
+              className={`${stepperButtonClass} rounded-l-[10px] border-r border-emerald-800 py-4`}
+            >
+              <Minus />
+            </button>
+            <Input
+              type="number"
+              min={0}
+              max={10}
+              value={value}
+              onChange={(event) => {
+                const next = Number(event.target.value);
+                if (!Number.isNaN(next) && next >= 0 && next <= 10) {
+                  onChange(next);
+                }
+              }}
+              className="h-auto min-h-12 flex-1 rounded-none border-0 bg-card py-3 text-center !text-xl !font-bold shadow-none focus-visible:ring-0 md:!text-xl"
+            />
+            <button
+              type="button"
+              onClick={() => onChange(Math.min(10, value + 1))}
+              className={`${stepperButtonClass} rounded-r-[10px] border-l border-emerald-800 py-4`}
+            >
+              <Plus />
+            </button>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
