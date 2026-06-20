@@ -1,9 +1,31 @@
 "use client";
 
+import { LayoutDashboard, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 
 export function RoundActions({
@@ -19,7 +41,6 @@ export function RoundActions({
     null,
   );
   const [error, setError] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   async function saveDate() {
     setPending("date");
@@ -83,78 +104,90 @@ export function RoundActions({
 
   return (
     <div className="mt-8 flex flex-col gap-4">
-      <div className="rounded-2xl border border-zinc-200 bg-white p-4">
-        <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-zinc-700">
-            Fecha de la ronda
-          </span>
-          <input
-            type="date"
-            value={date}
-            onChange={(event) => setDate(event.target.value)}
-            className="h-11 rounded-xl border border-zinc-200 px-3 text-sm outline-none ring-emerald-500 focus:ring-2"
-          />
-        </label>
-        <button
-          type="button"
-          onClick={saveDate}
-          disabled={pending === "date" || date === playedOn}
-          className="mt-3 h-10 w-full rounded-xl border border-zinc-200 text-sm font-medium text-zinc-700 disabled:opacity-50"
-        >
-          {pending === "date" ? "Guardando..." : "Guardar fecha"}
-        </button>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Fecha de la ronda</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="round-date">Fecha</Label>
+            <Input
+              id="round-date"
+              type="date"
+              value={date}
+              onChange={(event) => setDate(event.target.value)}
+              className="h-11"
+            />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={saveDate}
+            disabled={pending === "date" || date === playedOn}
+          >
+            {pending === "date" ? "Guardando..." : "Guardar fecha"}
+          </Button>
+        </CardContent>
+      </Card>
 
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
 
-      <button
+      <Button
+        asChild
+        className="h-12 bg-emerald-700 font-semibold hover:bg-emerald-800"
+      >
+        <Link href="/dashboard">
+          <LayoutDashboard />
+          Ir al dashboard
+        </Link>
+      </Button>
+
+      <Button
         type="button"
+        variant="outline"
         onClick={editRound}
         disabled={pending !== null}
-        className="h-12 rounded-xl border border-zinc-200 text-sm font-medium text-zinc-700"
+        className="h-12"
       >
+        <Pencil />
         {pending === "edit" ? "Abriendo..." : "Editar hoyos"}
-      </button>
+      </Button>
 
-      {!confirmDelete ? (
-        <button
-          type="button"
-          onClick={() => setConfirmDelete(true)}
-          className="h-12 rounded-xl border border-red-200 text-sm font-medium text-red-700"
-        >
-          Borrar ronda
-        </button>
-      ) : (
-        <div className="flex flex-col gap-2 rounded-2xl border border-red-200 bg-red-50 p-4">
-          <p className="text-sm text-red-800">
-            ¿Borrar esta ronda? No se puede deshacer.
-          </p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setConfirmDelete(false)}
-              className="h-10 flex-1 rounded-xl border border-zinc-200 bg-white text-sm"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-12 border-destructive/30 text-destructive hover:bg-destructive/10"
+          >
+            <Trash2 />
+            Borrar ronda
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Borrar esta ronda?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminarán todos los scores
+              de la ronda.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
               onClick={deleteRound}
               disabled={pending === "delete"}
-              className="h-10 flex-1 rounded-xl bg-red-600 text-sm font-medium text-white"
             >
               {pending === "delete" ? "Borrando..." : "Confirmar"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      <Link
-        href="/nueva-ronda"
-        className="flex h-12 items-center justify-center rounded-xl bg-emerald-700 font-semibold text-white"
-      >
-        Nueva ronda
-      </Link>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

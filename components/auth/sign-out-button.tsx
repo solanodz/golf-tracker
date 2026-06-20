@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
 export function SignOutButton() {
@@ -15,12 +16,13 @@ export function SignOutButton() {
   }
 
   return (
-    <button
+    <Button
       type="button"
+      variant="outline"
       onClick={handleSignOut}
-      className="h-12 w-full rounded-xl border border-zinc-200 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+      className="h-12 w-full"
     >
       Cerrar sesión
-    </button>
+    </Button>
   );
 }

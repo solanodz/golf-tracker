@@ -2,6 +2,14 @@
 
 import { useEffect, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   BoolToggle,
   PuttsInput,
@@ -10,9 +18,12 @@ import {
 import { TriStateToggle } from "@/components/round/tri-state-toggle";
 import type { CourseHole } from "@/lib/database.types";
 import {
+  applyScoreToHoleEntry,
   emptyHoleEntry,
   holeEntryFromScore,
+  isHoleInOne,
   isPar3,
+  normalizeHoleEntry,
   type HoleEntry,
 } from "@/lib/golf";
 
@@ -34,12 +45,14 @@ export function HoleForm({
   onBack?: () => void;
 }) {
   const [entry, setEntry] = useState<HoleEntry>(
-    initial ?? emptyHoleEntry(hole.par),
+    normalizeHoleEntry(initial ?? emptyHoleEntry(hole.par)),
   );
 
   useEffect(() => {
-    setEntry(initial ?? emptyHoleEntry(hole.par));
+    setEntry(normalizeHoleEntry(initial ?? emptyHoleEntry(hole.par)));
   }, [hole.id, initial, hole.par]);
+
+  const holeInOne = isHoleInOne(entry.score);
 
   const par3 = isPar3(hole.par);
 
@@ -49,30 +62,34 @@ export function HoleForm({
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    await onSave(entry);
+    await onSave(normalizeHoleEntry(entry));
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-      <div className="rounded-2xl border border-zinc-200 bg-white p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-emerald-700">
-              Hoyo {hole.number}
-            </p>
-            <p className="text-2xl font-bold text-zinc-900">Par {hole.par}</p>
+      <Card>
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div>
+              <CardDescription className="font-medium text-emerald-700">
+                Hoyo {hole.number}
+              </CardDescription>
+              <CardTitle className="text-2xl">Par {hole.par}</CardTitle>
+            </div>
+            <CardDescription className="text-right">
+              <p>{hole.yards} yds</p>
+              <p>HCP {hole.hcp}</p>
+            </CardDescription>
           </div>
-          <div className="text-right text-sm text-zinc-500">
-            <p>{hole.yards} yds</p>
-            <p>HCP {hole.hcp}</p>
-          </div>
-        </div>
-      </div>
+        </CardHeader>
+      </Card>
 
       <ScoreInput
         par={hole.par}
         value={entry.score}
-        onChange={(score) => update("score", score)}
+        onChange={(score) =>
+          setEntry((prev) => applyScoreToHoleEntry(prev, score))
+        }
       />
 
       <TriStateToggle
@@ -99,29 +116,31 @@ export function HoleForm({
       <PuttsInput
         value={entry.putts}
         onChange={(putts) => update("putts", putts)}
+        disabled={holeInOne}
       />
 
       <div className="flex gap-3 pt-2">
         {onBack ? (
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={onBack}
             disabled={saving}
-            className="h-12 flex-1 rounded-xl border border-zinc-200 text-sm font-medium text-zinc-700"
+            className="h-12 flex-1"
           >
             Atrás
-          </button>
+          </Button>
         ) : null}
-        <button
+        <Button
           type="submit"
           disabled={saving}
-          className="h-12 flex-[2] rounded-xl bg-emerald-700 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-60"
+          className="h-12 flex-[2] bg-emerald-700 hover:bg-emerald-800"
         >
           {saving
             ? "Guardando..."
             : (saveLabel ??
               (isLastHole ? "Finalizar ronda" : "Siguiente hoyo"))}
-        </button>
+        </Button>
       </div>
     </form>
   );

@@ -1,3 +1,4 @@
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoginForm } from "@/components/auth/login-form";
 
 export default async function LoginPage({
@@ -14,17 +15,19 @@ export default async function LoginPage({
         <p className="text-sm font-semibold uppercase tracking-widest text-emerald-700">
           Golf Tracker
         </p>
-        <h1 className="mt-2 text-3xl font-bold text-zinc-900">Ingresá</h1>
-        <p className="mt-2 text-zinc-600">
+        <h1 className="mt-2 text-3xl font-bold">Ingresá</h1>
+        <p className="mt-2 text-muted-foreground">
           Al registrarte recibís un email de confirmación. Después ingresás solo
           con email y contraseña.
         </p>
       </div>
 
       {authError ? (
-        <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-          No pudimos validar la sesión. Volvé a ingresar.
-        </p>
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>
+            No pudimos validar la sesión. Volvé a ingresar.
+          </AlertDescription>
+        </Alert>
       ) : null}
 
       <LoginForm />

@@ -3,6 +3,29 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { HoleForm } from "@/components/round/hole-form";
 import type { Profile } from "@/lib/database.types";
 import {
@@ -14,7 +37,9 @@ import {
   type HoleEntry,
   type RoundWithDetails,
 } from "@/lib/golf";
+import { checkNewPersonalBest, roundGross } from "@/lib/best-rounds";
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 
 type Screen = "resume" | "start" | "playing";
 
@@ -62,7 +87,7 @@ export function RoundFlow({
   }, [round?.hole_scores]);
 
   async function upsertHoleScore(entry: HoleEntry) {
-    if (!round || !currentHole) return;
+    if (!round || !currentHole) return null;
 
     const supabase = createClient();
     const { data, error: upsertError } = await supabase
@@ -91,6 +116,8 @@ export function RoundFlow({
       );
       return { ...prev, hole_scores: [...others, data] };
     });
+
+    return data;
   }
 
   async function handleStartRound() {
@@ -191,12 +218,34 @@ export function RoundFlow({
     setError(null);
 
     try {
-      await upsertHoleScore(entry);
+      const savedScore = await upsertHoleScore(entry);
+      if (!savedScore) return;
 
       const isLast = holeIndex === holes.length - 1;
 
       if (isLast) {
         const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) throw new Error("Sesión expirada.");
+
+        const allScores = [
+          ...round.hole_scores.filter(
+            (score) => score.course_hole_id !== currentHole!.id,
+          ),
+          savedScore,
+        ];
+        const gross = roundGross(allScores);
+
+        const isNewRecord = await checkNewPersonalBest(supabase, {
+          userId: user.id,
+          roundId: round.id,
+          courseId: round.course_id,
+          gross,
+        });
+
         const { error: completeError } = await supabase
           .from("rounds")
           .update({ status: "completed" })
@@ -204,7 +253,10 @@ export function RoundFlow({
 
         if (completeError) throw completeError;
 
-        router.push(`/resumen/${round.id}`);
+        const resumenUrl = isNewRecord
+          ? `/resumen/${round.id}?record=1`
+          : `/resumen/${round.id}`;
+        router.push(resumenUrl);
         router.refresh();
         return;
       }
@@ -226,32 +278,59 @@ export function RoundFlow({
     const allSaved = saved >= 18;
 
     return (
-      <main className="px-4 py-6">
-        <h1 className="text-2xl font-bold text-zinc-900">Ronda en progreso</h1>
-        <p className="mt-2 text-zinc-600">
+      <main className="py-6">
+        <h1 className="text-2xl font-bold">Ronda en progreso</h1>
+        <p className="mt-2 text-muted-foreground">
           Tenés una ronda abierta en{" "}
           <strong>{round.courses.name}</strong> ({saved}/18 hoyos).
         </p>
 
-        {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
+        {error ? (
+          <Alert variant="destructive" className="mt-4">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : null}
 
         <div className="mt-6 flex flex-col gap-3">
-          <button
+          <Button
             type="button"
             onClick={handleResume}
             disabled={pending}
-            className="h-12 rounded-xl bg-emerald-700 font-semibold text-white"
+            className="h-12 bg-emerald-700 hover:bg-emerald-800"
           >
             {allSaved ? "Elegir hoyo a editar" : "Retomar ronda"}
-          </button>
-          <button
-            type="button"
-            onClick={handleAbandon}
-            disabled={pending}
-            className="h-12 rounded-xl border border-red-200 text-sm font-medium text-red-700"
-          >
-            {pending ? "Abandonando..." : "Abandonar y empezar nueva"}
-          </button>
+          </Button>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pending}
+                className="h-12 border-destructive/30 text-destructive hover:bg-destructive/10"
+              >
+                {pending ? "Abandonando..." : "Abandonar y empezar nueva"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Abandonar la ronda?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Se borrará la ronda en progreso sin dejar rastro en el
+                  historial.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  onClick={handleAbandon}
+                >
+                  Abandonar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </main>
     );
@@ -259,59 +338,81 @@ export function RoundFlow({
 
   if (screen === "start") {
     return (
-      <main className="px-4 py-6">
-        <h1 className="text-2xl font-bold text-zinc-900">Nueva Ronda</h1>
-        <p className="mt-2 text-zinc-600">Elegí la cancha y confirmá tu HCP.</p>
+      <main className="py-6">
+        <h1 className="text-2xl font-bold">Nueva Ronda</h1>
+        <p className="mt-2 text-muted-foreground">
+          Elegí la cancha y confirmá tu HCP.
+        </p>
 
         <div className="mt-6 flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <span className="text-sm font-medium text-zinc-700">Cancha</span>
-            <div className="grid grid-cols-1 gap-2">
+            <Label>Cancha</Label>
+            <RadioGroup
+              value={selectedCourseId}
+              onValueChange={setSelectedCourseId}
+              className="grid w-full gap-2"
+            >
               {courses.map((course) => {
                 const selected = selectedCourseId === course.id;
+
                 return (
-                  <button
+                  <Label
                     key={course.id}
-                    type="button"
-                    onClick={() => setSelectedCourseId(course.id)}
-                    className={`rounded-xl border p-4 text-left transition-colors ${
-                      selected
-                        ? "border-emerald-600 bg-emerald-50"
-                        : "border-zinc-200 bg-white"
-                    }`}
+                    htmlFor={`course-${course.id}`}
+                    className="flex w-full cursor-pointer"
                   >
-                    <p className="font-semibold text-zinc-900">{course.name}</p>
-                    <p className="text-sm text-zinc-500">
-                      Par {course.par} · {course.total_yards} yds
-                    </p>
-                  </button>
+                    <Card
+                      className={cn(
+                        "w-full",
+                        selected && "ring-2 ring-emerald-600 ring-offset-2",
+                      )}
+                    >
+                      <CardContent className="flex w-full items-center gap-3 py-4">
+                        <RadioGroupItem
+                          value={course.id}
+                          id={`course-${course.id}`}
+                        />
+                        <div>
+                          <p className="font-semibold">{course.name}</p>
+                          <CardDescription>
+                            Par {course.par} · {course.total_yards} yds
+                          </CardDescription>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Label>
                 );
               })}
-            </div>
+            </RadioGroup>
           </div>
 
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-medium text-zinc-700">HCP</span>
-            <input
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="handicap">HCP</Label>
+            <Input
+              id="handicap"
               type="number"
               min={0}
               step={0.1}
               value={handicap}
               onChange={(event) => setHandicap(event.target.value)}
-              className="h-12 rounded-xl border border-zinc-200 bg-white px-4 text-base outline-none ring-emerald-500 focus:ring-2"
+              className="h-12"
             />
-          </label>
+          </div>
 
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
+          {error ? (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : null}
 
-          <button
+          <Button
             type="button"
             onClick={handleStartRound}
             disabled={pending}
-            className="h-12 rounded-xl bg-emerald-700 font-semibold text-white disabled:opacity-60"
+            className="h-12 bg-emerald-700 hover:bg-emerald-800"
           >
             {pending ? "Iniciando..." : "Iniciar ronda"}
-          </button>
+          </Button>
         </div>
       </main>
     );
@@ -320,32 +421,57 @@ export function RoundFlow({
   if (!round || !currentHole) return null;
 
   return (
-    <main className="px-4 py-6">
+    <main className="py-6">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <p className="text-sm text-zinc-500">{round.courses.name}</p>
-          <p className="text-lg font-semibold text-zinc-900">
-            {holeIndex + 1} / {holes.length}
-          </p>
+          <p className="text-sm text-muted-foreground">{round.courses.name}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-lg font-semibold">
+              {holeIndex + 1} / {holes.length}
+            </p>
+            <Badge variant="secondary">En juego</Badge>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={handleAbandon}
-          disabled={pending}
-          className="text-sm font-medium text-red-600"
-        >
-          Abandonar
-        </button>
+
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={pending}
+              className="text-destructive hover:text-destructive"
+            >
+              Abandonar
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Abandonar la ronda?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Se borrará la ronda en progreso sin dejar rastro en el
+                historial.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction variant="destructive" onClick={handleAbandon}>
+                Abandonar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
-      <div className="mb-4 h-2 overflow-hidden rounded-full bg-zinc-200">
-        <div
-          className="h-full rounded-full bg-emerald-600 transition-all"
-          style={{ width: `${((holeIndex + 1) / holes.length) * 100}%` }}
-        />
-      </div>
+      <Progress
+        value={((holeIndex + 1) / holes.length) * 100}
+        className="mb-4 h-2 [&_[data-slot=progress-indicator]]:bg-emerald-600"
+      />
 
-      {error ? <p className="mb-4 text-sm text-red-600">{error}</p> : null}
+      {error ? (
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
 
       <HoleForm
         key={currentHole.id}

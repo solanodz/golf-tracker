@@ -3,6 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 
 export function OnboardingForm() {
@@ -59,29 +63,32 @@ export function OnboardingForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex w-full flex-col gap-4">
-      <label className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-zinc-700">Nombre</span>
-        <input
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="first_name">Nombre</Label>
+        <Input
+          id="first_name"
           name="first_name"
           required
           autoComplete="given-name"
-          className="h-12 rounded-xl border border-zinc-200 bg-white px-4 text-base outline-none ring-emerald-500 focus:ring-2"
+          className="h-12"
         />
-      </label>
+      </div>
 
-      <label className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-zinc-700">Apellido</span>
-        <input
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="last_name">Apellido</Label>
+        <Input
+          id="last_name"
           name="last_name"
           required
           autoComplete="family-name"
-          className="h-12 rounded-xl border border-zinc-200 bg-white px-4 text-base outline-none ring-emerald-500 focus:ring-2"
+          className="h-12"
         />
-      </label>
+      </div>
 
-      <label className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-zinc-700">HCP</span>
-        <input
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="handicap">HCP</Label>
+        <Input
+          id="handicap"
           name="handicap"
           type="number"
           required
@@ -89,19 +96,23 @@ export function OnboardingForm() {
           step={0.1}
           inputMode="decimal"
           placeholder="12.4"
-          className="h-12 rounded-xl border border-zinc-200 bg-white px-4 text-base outline-none ring-emerald-500 focus:ring-2"
+          className="h-12"
         />
-      </label>
+      </div>
 
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
 
-      <button
+      <Button
         type="submit"
         disabled={pending}
-        className="mt-2 h-12 rounded-xl bg-emerald-700 text-base font-semibold text-white transition-colors hover:bg-emerald-800 disabled:opacity-60"
+        className="mt-2 h-12 bg-emerald-700 text-base font-semibold hover:bg-emerald-800"
       >
         {pending ? "Guardando..." : "Empezar"}
-      </button>
+      </Button>
     </form>
   );
 }

@@ -3,23 +3,33 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { HoleForm } from "@/components/round/hole-form";
 import { HolePicker } from "@/components/round/hole-picker";
 import {
   holeEntryFromScore,
   sortHoles,
-  type CourseWithHoles,
   type HoleEntry,
   type RoundWithDetails,
 } from "@/lib/golf";
+import { checkNewPersonalBest, roundGross } from "@/lib/best-rounds";
 import { createClient } from "@/lib/supabase/client";
 
 type Screen = "picker" | "hole";
 
-export function EditRoundFlow({ round }: { round: RoundWithDetails }) {
+export function EditRoundFlow({
+  round,
+  initialHoleIndex = 0,
+  initialScreen = "picker",
+}: {
+  round: RoundWithDetails;
+  initialHoleIndex?: number;
+  initialScreen?: Screen;
+}) {
   const router = useRouter();
-  const [screen, setScreen] = useState<Screen>("picker");
-  const [holeIndex, setHoleIndex] = useState(0);
+  const [screen, setScreen] = useState<Screen>(initialScreen);
+  const [holeIndex, setHoleIndex] = useState(initialHoleIndex);
   const [roundState, setRoundState] = useState(round);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -94,11 +104,37 @@ export function EditRoundFlow({ round }: { round: RoundWithDetails }) {
     }
   }
 
-  async function finishEditing() {
+  async function completeRound() {
     setPending(true);
     setError(null);
 
     const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setPending(false);
+      setError("Sesión expirada.");
+      return;
+    }
+
+    const gross = roundGross(roundState.hole_scores);
+    let isNewRecord = false;
+
+    try {
+      isNewRecord = await checkNewPersonalBest(supabase, {
+        userId: user.id,
+        roundId: roundState.id,
+        courseId: roundState.course_id,
+        gross,
+      });
+    } catch (err) {
+      setPending(false);
+      setError(err instanceof Error ? err.message : "Error al verificar récord.");
+      return;
+    }
+
     const { error: completeError } = await supabase
       .from("rounds")
       .update({ status: "completed" })
@@ -111,37 +147,29 @@ export function EditRoundFlow({ round }: { round: RoundWithDetails }) {
       return;
     }
 
-    router.push(`/resumen/${roundState.id}`);
+    const resumenUrl = isNewRecord
+      ? `/resumen/${roundState.id}?record=1`
+      : `/resumen/${roundState.id}`;
+    router.push(resumenUrl);
     router.refresh();
   }
 
+  async function finishEditing() {
+    await completeRound();
+  }
+
   async function cancelEditing() {
-    setPending(true);
-    setError(null);
-
-    const supabase = createClient();
-    const { error: cancelError } = await supabase
-      .from("rounds")
-      .update({ status: "completed" })
-      .eq("id", roundState.id);
-
-    setPending(false);
-
-    if (cancelError) {
-      setError(cancelError.message);
-      return;
-    }
-
-    router.push(`/resumen/${roundState.id}`);
-    router.refresh();
+    await completeRound();
   }
 
   if (screen === "picker") {
     return (
-      <main className="px-4 py-6">
-        <p className="text-sm text-zinc-500">{roundState.courses.name}</p>
-        <h1 className="text-2xl font-bold text-zinc-900">Editar ronda</h1>
-        <p className="mt-2 text-sm text-zinc-600">
+      <main className="py-6">
+        <p className="text-sm text-muted-foreground">
+          {roundState.courses.name}
+        </p>
+        <h1 className="text-2xl font-bold">Editar ronda</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           Elegí el hoyo que querés modificar.
         </p>
 
@@ -156,25 +184,30 @@ export function EditRoundFlow({ round }: { round: RoundWithDetails }) {
           />
         </div>
 
-        {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
+        {error ? (
+          <Alert variant="destructive" className="mt-4">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : null}
 
         <div className="mt-6 flex flex-col gap-3">
-          <button
+          <Button
             type="button"
             onClick={finishEditing}
             disabled={pending}
-            className="h-12 rounded-xl bg-emerald-700 font-semibold text-white disabled:opacity-60"
+            className="h-12 bg-emerald-700 hover:bg-emerald-800"
           >
             {pending ? "Guardando..." : "Guardar y volver al resumen"}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="outline"
             onClick={cancelEditing}
             disabled={pending}
-            className="h-12 rounded-xl border border-zinc-200 text-sm font-medium text-zinc-700"
+            className="h-12"
           >
             Cancelar edición
-          </button>
+          </Button>
         </div>
       </main>
     );
@@ -183,16 +216,21 @@ export function EditRoundFlow({ round }: { round: RoundWithDetails }) {
   if (!currentHole) return null;
 
   return (
-    <main className="px-4 py-6">
-      <button
+    <main className="py-6">
+      <Button
         type="button"
+        variant="ghost"
         onClick={() => setScreen("picker")}
-        className="mb-4 text-sm font-medium text-emerald-700"
+        className="mb-4 px-0 text-emerald-700 hover:bg-transparent hover:text-emerald-800"
       >
         ← Volver a hoyos
-      </button>
+      </Button>
 
-      {error ? <p className="mb-4 text-sm text-red-600">{error}</p> : null}
+      {error ? (
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
 
       <HoleForm
         key={currentHole.id}

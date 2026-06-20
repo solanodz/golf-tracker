@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -221,12 +222,12 @@ function AuthMessage({
   }
 
   return (
-    <p
-      className={`text-sm ${
-        status === "error" ? "text-red-600" : "text-emerald-700"
-      }`}
-    >
-      {message}
-    </p>
+    <Alert variant={status === "error" ? "destructive" : "default"}>
+      <AlertDescription
+        className={status === "error" ? undefined : "text-emerald-700"}
+      >
+        {message}
+      </AlertDescription>
+    </Alert>
   );
 }

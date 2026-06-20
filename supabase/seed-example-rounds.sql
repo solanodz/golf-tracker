@@ -1,8 +1,8 @@
 -- =============================================================================
 -- Golf Tracker — Rondas de ejemplo (5 Country + 5 Alpa Sumaj)
 -- =============================================================================
--- Ejecutar en el SQL Editor de Supabase (requiere perfil existente).
--- Regenerar: node scripts/seed-example-rounds.mjs
+-- Ejecutar en el SQL Editor de Supabase si no tenés service role key local.
+-- Regenerar: npm run seed:rounds -- --sql-only
 -- =============================================================================
 
 DO $$
@@ -20,12 +20,16 @@ DECLARE
   v_mod int;
   meta record;
   round_idx int := 0;
+  v_handicap numeric(4,1);
 BEGIN
   SELECT id INTO v_user_id FROM public.profiles ORDER BY created_at LIMIT 1;
 
   IF v_user_id IS NULL THEN
     RAISE EXCEPTION 'No hay perfiles. Completá el onboarding antes de cargar datos de ejemplo.';
   END IF;
+
+  SELECT COALESCE(handicap, 12.4) INTO v_handicap
+  FROM public.profiles WHERE id = v_user_id;
 
   DELETE FROM public.rounds
   WHERE user_id = v_user_id
@@ -54,7 +58,7 @@ BEGIN
     END IF;
 
     INSERT INTO public.rounds (user_id, course_id, played_on, status, handicap_used)
-    VALUES (v_user_id, v_course_id, meta.played_on, 'completed', 12.4)
+    VALUES (v_user_id, v_course_id, meta.played_on, 'completed', v_handicap)
     RETURNING id INTO v_round_id;
 
     FOR v_hole IN

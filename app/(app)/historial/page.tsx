@@ -1,10 +1,13 @@
 import { redirect } from "next/navigation";
 
-import { RoundList, type RoundListItem } from "@/components/historial/round-list";
+import { HistorialView } from "@/components/historial/historial-view";
+import { type RoundListItem } from "@/components/historial/round-list";
+import { getBestRoundIdsByCourse } from "@/lib/best-rounds";
 import { createClient } from "@/lib/supabase/server";
 
 type RawRound = {
   id: string;
+  course_id: string;
   played_on: string;
   handicap_used: number;
   courses: { name: string } | { name: string }[];
@@ -27,29 +30,37 @@ export default async function HistorialPage() {
 
   const { data: rounds } = await supabase
     .from("rounds")
-    .select("id, played_on, handicap_used, courses(name), hole_scores(score)")
+    .select(
+      "id, course_id, played_on, handicap_used, courses(name), hole_scores(score)",
+    )
     .eq("user_id", user.id)
     .eq("status", "completed")
     .order("played_on", { ascending: false });
 
-  const roundList: RoundListItem[] = ((rounds as RawRound[] | null) ?? []).map(
-    (round) => ({
-      id: round.id,
-      played_on: round.played_on,
-      handicap_used: round.handicap_used,
-      courses: { name: courseName(round.courses) },
-      hole_scores: round.hole_scores.map((h) => ({ score: h.score })),
-    }),
+  const rawRounds = (rounds as RawRound[] | null) ?? [];
+
+  const bestRoundIds = new Set(
+    getBestRoundIdsByCourse(
+      rawRounds.map((round) => ({
+        id: round.id,
+        course_id: round.course_id,
+        hole_scores: round.hole_scores,
+      })),
+    ),
   );
 
-  return (
-    <main className="px-4 py-6">
-      <h1 className="text-2xl font-bold text-zinc-900">Historial</h1>
-      <p className="mt-1 text-zinc-600">
-        {roundList.length} {roundList.length === 1 ? "ronda" : "rondas"}
-      </p>
+  const roundList: RoundListItem[] = rawRounds.map((round) => ({
+    id: round.id,
+    played_on: round.played_on,
+    handicap_used: round.handicap_used,
+    courses: { name: courseName(round.courses) },
+    hole_scores: round.hole_scores.map((h) => ({ score: h.score })),
+    isBestOnCourse: bestRoundIds.has(round.id),
+  }));
 
-      <RoundList rounds={roundList} />
+  return (
+    <main className="py-6">
+      <HistorialView rounds={roundList} />
     </main>
   );
 }

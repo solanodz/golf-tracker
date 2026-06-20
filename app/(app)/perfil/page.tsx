@@ -2,6 +2,15 @@ import { redirect } from "next/navigation";
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { ProfileForm } from "@/components/profile/profile-form";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { displayName } from "@/lib/profile";
 import { createClient } from "@/lib/supabase/server";
 
@@ -26,21 +35,26 @@ export default async function PerfilPage() {
   }
 
   return (
-    <main className="px-4 py-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-zinc-900">Perfil</h1>
-        <p className="mt-1 text-zinc-600">{displayName(profile)}</p>
-        <p className="text-sm text-zinc-500">{user.email}</p>
-      </div>
+    <main className="py-6">
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-2xl">Perfil</CardTitle>
+          <CardDescription>{displayName(profile)}</CardDescription>
+          <CardDescription>{user.email}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex items-center gap-4">
+          <Avatar className="h-16 w-16">
+            <AvatarFallback className="bg-emerald-100 text-xl font-bold text-emerald-800">
+              {profile.first_name?.[0]?.toUpperCase() ?? "?"}
+            </AvatarFallback>
+          </Avatar>
+          <p className="text-sm text-muted-foreground">
+            Avatar: próximo paso (subida de imagen).
+          </p>
+        </CardContent>
+      </Card>
 
-      <div className="mb-4 flex items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-xl font-bold text-emerald-800">
-          {profile.first_name?.[0]?.toUpperCase() ?? "?"}
-        </div>
-        <p className="text-sm text-zinc-500">
-          Avatar: próximo paso (subida de imagen).
-        </p>
-      </div>
+      <Separator className="mb-6" />
 
       <ProfileForm profile={profile} />
 

@@ -1,6 +1,13 @@
 "use client";
 
-import { scoreLabel } from "@/lib/golf";
+import { Minus, Plus } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { ScoreLabelText } from "@/components/round/score-label";
 
 export function ScoreInput({
   par,
@@ -11,51 +18,51 @@ export function ScoreInput({
   value: number;
   onChange: (value: number) => void;
 }) {
-  function decrement() {
-    onChange(Math.max(1, value - 1));
-  }
-
-  function increment() {
-    onChange(Math.min(15, value + 1));
-  }
-
   return (
     <div className="flex flex-col gap-3">
-      <span className="text-sm font-medium text-zinc-700">Score</span>
+      <Label>Score</Label>
 
       <div className="flex items-center gap-3">
-        <button
+        <Button
           type="button"
-          onClick={decrement}
-          className="flex h-12 w-12 items-center justify-center rounded-xl border border-zinc-200 bg-white text-xl font-medium text-zinc-700"
+          variant="outline"
+          size="icon-lg"
+          onClick={() => onChange(Math.max(1, value - 1))}
         >
-          −
-        </button>
+          <Minus />
+        </Button>
 
-        <div className="flex flex-1 flex-col items-center rounded-xl border border-zinc-200 bg-white px-4 py-2">
-          <input
-            type="number"
-            min={1}
-            max={15}
-            value={value}
-            onChange={(event) => {
-              const next = Number(event.target.value);
-              if (!Number.isNaN(next) && next >= 1 && next <= 15) {
-                onChange(next);
-              }
-            }}
-            className="w-full bg-transparent text-center text-2xl font-bold text-zinc-900 outline-none"
-          />
-          <span className="text-xs text-zinc-500">{scoreLabel(value, par)}</span>
-        </div>
+        <Card className="flex-1">
+          <CardContent className="flex flex-col items-center py-2">
+            <Input
+              type="number"
+              min={1}
+              max={15}
+              value={value}
+              onChange={(event) => {
+                const next = Number(event.target.value);
+                if (!Number.isNaN(next) && next >= 1 && next <= 15) {
+                  onChange(next);
+                }
+              }}
+              className="h-auto border-0 bg-transparent text-center text-2xl font-bold shadow-none focus-visible:ring-0"
+            />
+            <ScoreLabelText
+              score={value}
+              par={par}
+              className="text-xs text-muted-foreground"
+            />
+          </CardContent>
+        </Card>
 
-        <button
+        <Button
           type="button"
-          onClick={increment}
-          className="flex h-12 w-12 items-center justify-center rounded-xl border border-zinc-200 bg-white text-xl font-medium text-zinc-700"
+          variant="outline"
+          size="icon-lg"
+          onClick={() => onChange(Math.min(15, value + 1))}
         >
-          +
-        </button>
+          <Plus />
+        </Button>
       </div>
     </div>
   );
@@ -64,45 +71,59 @@ export function ScoreInput({
 export function PuttsInput({
   value,
   onChange,
+  disabled = false,
 }: {
   value: number;
   onChange: (value: number) => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-sm font-medium text-zinc-700">Putts</span>
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => onChange(Math.max(0, value - 1))}
-          className="flex h-12 w-12 items-center justify-center rounded-xl border border-zinc-200 bg-white text-xl font-medium"
-        >
-          −
-        </button>
-        <input
-          type="number"
-          min={0}
-          max={10}
-          value={value}
-          onChange={(event) => {
-            const next = Number(event.target.value);
-            if (!Number.isNaN(next) && next >= 0 && next <= 10) {
-              onChange(next);
-            }
-          }}
-          className="h-12 flex-1 rounded-xl border border-zinc-200 bg-white text-center text-xl font-bold outline-none ring-emerald-500 focus:ring-2"
-        />
-        <button
-          type="button"
-          onClick={() => onChange(Math.min(10, value + 1))}
-          className="flex h-12 w-12 items-center justify-center rounded-xl border border-zinc-200 bg-white text-xl font-medium"
-        >
-          +
-        </button>
-      </div>
+      <Label>Putts</Label>
+      {disabled ? (
+        <p className="rounded-lg border bg-muted/30 px-3 py-3 text-sm text-muted-foreground">
+          <span className="font-semibold text-foreground">0</span> — en un
+          hoyo en uno el único tiro fue desde el tee.
+        </p>
+      ) : (
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-lg"
+            onClick={() => onChange(Math.max(0, value - 1))}
+          >
+            <Minus />
+          </Button>
+          <Input
+            type="number"
+            min={0}
+            max={10}
+            value={value}
+            onChange={(event) => {
+              const next = Number(event.target.value);
+              if (!Number.isNaN(next) && next >= 0 && next <= 10) {
+                onChange(next);
+              }
+            }}
+            className="h-12 flex-1 text-center text-xl font-bold"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-lg"
+            onClick={() => onChange(Math.min(10, value + 1))}
+          >
+            <Plus />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
+
+const activeToggleItemClass =
+  "h-11 flex-1 data-[state=on]:z-10 data-[state=on]:!border data-[state=on]:!border-emerald-600 data-[state=on]:bg-emerald-50 data-[state=on]:text-emerald-800";
 
 export function BoolToggle({
   label,
@@ -115,26 +136,24 @@ export function BoolToggle({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-sm font-medium text-zinc-700">{label}</span>
-      <div className="grid grid-cols-2 gap-2">
-        {[
-          { val: true, text: "Sí" },
-          { val: false, text: "No" },
-        ].map((option) => (
-          <button
-            key={option.text}
-            type="button"
-            onClick={() => onChange(option.val)}
-            className={`h-11 rounded-xl border text-sm font-medium ${
-              value === option.val
-                ? "border-emerald-600 bg-emerald-50 text-emerald-800"
-                : "border-zinc-200 bg-white text-zinc-600"
-            }`}
-          >
-            {option.text}
-          </button>
-        ))}
-      </div>
+      <Label>{label}</Label>
+      <ToggleGroup
+        type="single"
+        value={value ? "yes" : "no"}
+        onValueChange={(next) => {
+          if (next) onChange(next === "yes");
+        }}
+        variant="outline"
+        spacing={0}
+        className="w-full"
+      >
+        <ToggleGroupItem value="yes" className={activeToggleItemClass}>
+          Sí
+        </ToggleGroupItem>
+        <ToggleGroupItem value="no" className={activeToggleItemClass}>
+          No
+        </ToggleGroupItem>
+      </ToggleGroup>
     </div>
   );
 }

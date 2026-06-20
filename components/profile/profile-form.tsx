@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/lib/database.types";
 
@@ -50,51 +54,62 @@ export function ProfileForm({ profile }: { profile: Profile }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <label className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-zinc-700">Nombre</span>
-        <input
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="first_name">Nombre</Label>
+        <Input
+          id="first_name"
           name="first_name"
           required
           defaultValue={profile.first_name ?? ""}
-          className="h-12 rounded-xl border border-zinc-200 bg-white px-4 text-base outline-none ring-emerald-500 focus:ring-2"
+          className="h-12"
         />
-      </label>
+      </div>
 
-      <label className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-zinc-700">Apellido</span>
-        <input
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="last_name">Apellido</Label>
+        <Input
+          id="last_name"
           name="last_name"
           required
           defaultValue={profile.last_name ?? ""}
-          className="h-12 rounded-xl border border-zinc-200 bg-white px-4 text-base outline-none ring-emerald-500 focus:ring-2"
+          className="h-12"
         />
-      </label>
+      </div>
 
-      <label className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-zinc-700">HCP</span>
-        <input
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="handicap">HCP</Label>
+        <Input
+          id="handicap"
           name="handicap"
           type="number"
           required
           min={0}
           step={0.1}
           defaultValue={profile.handicap ?? ""}
-          className="h-12 rounded-xl border border-zinc-200 bg-white px-4 text-base outline-none ring-emerald-500 focus:ring-2"
+          className="h-12"
         />
-      </label>
+      </div>
 
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
       {success ? (
-        <p className="text-sm text-emerald-700">Perfil actualizado.</p>
+        <Alert>
+          <AlertDescription className="text-emerald-700">
+            Perfil actualizado.
+          </AlertDescription>
+        </Alert>
       ) : null}
 
-      <button
+      <Button
         type="submit"
         disabled={pending}
-        className="h-12 rounded-xl bg-emerald-700 font-semibold text-white hover:bg-emerald-800 disabled:opacity-60"
+        className="h-12 bg-emerald-700 hover:bg-emerald-800"
       >
         {pending ? "Guardando..." : "Guardar cambios"}
-      </button>
+      </Button>
     </form>
   );
 }

@@ -1,5 +1,8 @@
 "use client";
 
+import { Label } from "@/components/ui/label";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+
 type TriStateOption = {
   value: "yes" | "no" | "na";
   label: string;
@@ -10,6 +13,9 @@ const options: TriStateOption[] = [
   { value: "no", label: "No" },
   { value: "na", label: "N/A" },
 ];
+
+const activeToggleItemClass =
+  "h-11 flex-1 data-[state=on]:z-10 data-[state=on]:!border data-[state=on]:!border-emerald-600 data-[state=on]:bg-emerald-50 data-[state=on]:text-emerald-800";
 
 export function TriStateToggle({
   label,
@@ -26,26 +32,27 @@ export function TriStateToggle({
 
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-sm font-medium text-zinc-700">{label}</span>
-      <div className={`grid gap-2 ${visible.length === 3 ? "grid-cols-3" : "grid-cols-2"}`}>
-        {visible.map((option) => {
-          const active = value === option.value;
-          return (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => onChange(option.value)}
-              className={`h-11 rounded-xl border text-sm font-medium transition-colors ${
-                active
-                  ? "border-emerald-600 bg-emerald-50 text-emerald-800"
-                  : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300"
-              }`}
-            >
-              {option.label}
-            </button>
-          );
-        })}
-      </div>
+      <Label>{label}</Label>
+      <ToggleGroup
+        type="single"
+        value={value}
+        onValueChange={(next) => {
+          if (next) onChange(next as "yes" | "no" | "na");
+        }}
+        variant="outline"
+        spacing={0}
+        className="w-full"
+      >
+        {visible.map((option) => (
+          <ToggleGroupItem
+            key={option.value}
+            value={option.value}
+            className={activeToggleItemClass}
+          >
+            {option.label}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
     </div>
   );
 }

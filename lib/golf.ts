@@ -21,7 +21,12 @@ export function defaultTriStateForPar(par: number): TriState {
   return isPar3(par) ? "na" : "no";
 }
 
+export function isHoleInOne(score: number): boolean {
+  return score === 1;
+}
+
 export function scoreLabel(score: number, par: number): string {
+  if (isHoleInOne(score)) return "H-I-1";
   const diff = score - par;
   if (diff <= -3) return "Albatross+";
   if (diff === -2) return "Eagle";
@@ -31,6 +36,80 @@ export function scoreLabel(score: number, par: number): string {
   if (diff === 2) return "Doble";
   if (diff === 3) return "Triple";
   return `+${diff}`;
+}
+
+export type ScoreShape =
+  | "none"
+  | "circle"
+  | "double-circle"
+  | "square"
+  | "double-square";
+
+export function scoreShape(score: number, par: number): ScoreShape {
+  const diff = score - par;
+  if (diff <= -2) return "double-circle";
+  if (diff === -1) return "circle";
+  if (diff === 0) return "none";
+  if (diff === 1) return "square";
+  return "double-square";
+}
+
+export type ScoreTone = "under" | "par" | "over";
+
+export function scoreTone(score: number, par: number): ScoreTone {
+  const diff = score - par;
+  if (diff < 0) return "under";
+  if (diff > 0) return "over";
+  return "par";
+}
+
+export function scoreToneBadgeClass(tone: ScoreTone): string {
+  if (tone === "under") {
+    return "border-emerald-400 bg-emerald-100 text-emerald-800";
+  }
+  if (tone === "over") {
+    return "border-orange-400 bg-orange-100 text-orange-800";
+  }
+  return "border-zinc-200 bg-white text-zinc-600";
+}
+
+export function scoreBadgeClass(score: number, par: number): string {
+  if (isHoleInOne(score)) {
+    return "border-2 border-[#B8941F] bg-[#FDF8ED]/80 font-semibold text-[#B8941F] dark:border-[#DDB94F] dark:bg-[#2A2210]/35 dark:text-[#DDB94F]";
+  }
+  return scoreToneBadgeClass(scoreTone(score, par));
+}
+
+export function scoreToneCardClass(tone: ScoreTone): string {
+  if (tone === "under") {
+    return "border-emerald-400";
+  }
+  if (tone === "over") {
+    return "border-orange-400";
+  }
+  return "border-zinc-300";
+}
+
+export function scoreToneScoreColors(tone: ScoreTone): {
+  text: string;
+  border: string;
+} {
+  if (tone === "under") {
+    return {
+      text: "text-emerald-800",
+      border: "border-emerald-700",
+    };
+  }
+  if (tone === "over") {
+    return {
+      text: "text-orange-800",
+      border: "border-orange-700",
+    };
+  }
+  return {
+    text: "text-zinc-600",
+    border: "border-zinc-400",
+  };
 }
 
 export type HoleEntry = {
@@ -51,14 +130,32 @@ export function emptyHoleEntry(par: number): HoleEntry {
   };
 }
 
+export function normalizeHoleEntry(entry: HoleEntry): HoleEntry {
+  if (isHoleInOne(entry.score)) {
+    return { ...entry, putts: 0 };
+  }
+  return entry;
+}
+
+export function applyScoreToHoleEntry(
+  entry: HoleEntry,
+  score: number,
+): HoleEntry {
+  const next = normalizeHoleEntry({ ...entry, score });
+  if (isHoleInOne(entry.score) && !isHoleInOne(score) && next.putts === 0) {
+    return { ...next, putts: 2 };
+  }
+  return next;
+}
+
 export function holeEntryFromScore(score: HoleScore) {
-  return {
+  return normalizeHoleEntry({
     score: score.score,
     putts: score.putts,
     gir: score.gir,
     fairway: score.fairway,
     penalty_from_tee: score.penalty_from_tee,
-  };
+  });
 }
 
 export function nextIncompleteHoleIndex(

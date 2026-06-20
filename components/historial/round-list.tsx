@@ -1,5 +1,17 @@
+"use client";
+
+import { Trophy } from "lucide-react";
 import Link from "next/link";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { formatRoundDate } from "@/lib/round-stats";
 
 export type RoundListItem = {
@@ -8,28 +20,30 @@ export type RoundListItem = {
   handicap_used: number;
   courses: { name: string };
   hole_scores: { score: number }[];
+  isBestOnCourse?: boolean;
 };
 
 export function RoundList({ rounds }: { rounds: RoundListItem[] }) {
   if (rounds.length === 0) {
     return (
-      <div className="mt-8 rounded-2xl border border-dashed border-zinc-300 bg-white p-8 text-center">
-        <p className="font-medium text-zinc-700">Sin rondas todavía</p>
-        <p className="mt-1 text-sm text-zinc-500">
-          Completá una ronda para verla acá.
-        </p>
-        <Link
-          href="/nueva-ronda"
-          className="mt-4 inline-flex h-11 items-center rounded-xl bg-emerald-700 px-5 text-sm font-semibold text-white"
-        >
-          Nueva ronda
-        </Link>
-      </div>
+      <Card className="mt-8 border-dashed">
+        <CardHeader className="text-center">
+          <CardTitle>Sin rondas todavía</CardTitle>
+          <CardDescription>
+            Completá una ronda para verla acá.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center pb-6">
+          <Button asChild className="bg-emerald-700 hover:bg-emerald-800">
+            <Link href="/nueva-ronda">Nueva ronda</Link>
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <ul className="mt-6 flex flex-col gap-3">
+    <ul className="mt-2 flex flex-col gap-3">
       {rounds.map((round) => {
         const gross = round.hole_scores.reduce((sum, h) => sum + h.score, 0);
         const net =
@@ -37,25 +51,36 @@ export function RoundList({ rounds }: { rounds: RoundListItem[] }) {
 
         return (
           <li key={round.id}>
-            <Link
-              href={`/resumen/${round.id}`}
-              className="block rounded-2xl border border-zinc-200 bg-white p-4 transition-colors hover:border-emerald-300"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-zinc-900">
-                    {round.courses.name}
-                  </p>
-                  <p className="mt-0.5 text-sm capitalize text-zinc-500">
-                    {formatRoundDate(round.played_on)}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-zinc-900">{gross}</p>
-                  <p className="text-xs text-zinc-500">Neto {net}</p>
-                </div>
-              </div>
-            </Link>
+            <Card className="transition-colors hover:ring-emerald-300">
+              <Link href={`/resumen/${round.id}`} className="block">
+                <CardContent className="flex items-start justify-between gap-3 py-4">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold">
+                      {round.courses.name}
+                    </p>
+                    <p className="mt-0.5 text-sm capitalize text-muted-foreground">
+                      {formatRoundDate(round.played_on)}
+                    </p>
+                    {round.isBestOnCourse ? (
+                      <Badge
+                        variant="outline"
+                        className="mt-1.5 gap-1 border-2 border-[#B8941F] bg-[#FDF8ED]/80 px-1.5 py-0 text-[10px] font-semibold text-[#B8941F] dark:border-[#DDB94F] dark:bg-[#2A2210]/35 dark:text-[#DDB94F]"
+                      >
+                        <Trophy
+                          className="size-3 text-[#B8941F] dark:text-[#DDB94F]"
+                          aria-hidden
+                        />
+                        Mejor ronda
+                      </Badge>
+                    ) : null}
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="text-lg font-bold">{gross}</p>
+                    <Badge variant="secondary">Neto {net}</Badge>
+                  </div>
+                </CardContent>
+              </Link>
+            </Card>
           </li>
         );
       })}

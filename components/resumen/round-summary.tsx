@@ -1,5 +1,6 @@
 import type { RoundStats } from "@/lib/round-stats";
 import { formatPct } from "@/lib/round-stats";
+import { Separator } from "@/components/ui/separator";
 
 import { StatCard, StatRow, StatSection } from "./stat-cards";
 
@@ -38,9 +39,12 @@ export function RoundSummary({ stats }: { stats: RoundStats }) {
       </StatSection>
 
       <section className="mt-6">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-emerald-700">
-          Putting
-        </h2>
+        <div className="mb-3 flex items-center gap-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-emerald-700">
+            Putting
+          </h2>
+          <Separator className="flex-1" />
+        </div>
         <div className="flex flex-col gap-2">
           <StatRow label="Putts totales" value={stats.puttsTotal} />
           <StatRow label="Promedio putts" value={stats.puttsAvg} />

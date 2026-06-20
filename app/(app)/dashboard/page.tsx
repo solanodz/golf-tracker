@@ -1,6 +1,13 @@
 import { redirect } from "next/navigation";
 
 import { Dashboard } from "@/components/dashboard/dashboard";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import type { DashboardRound } from "@/lib/dashboard-stats";
 import { createClient } from "@/lib/supabase/server";
 
@@ -52,9 +59,22 @@ export default async function DashboardPage() {
   );
 
   return (
-    <main className="px-4 py-6">
-      <h1 className="text-2xl font-bold text-zinc-900">Dashboard</h1>
-      <p className="mt-1 text-zinc-600">Evolución de tu juego</p>
+    <main className="py-6">
+      <Card className="mb-2 border-0 bg-transparent shadow-none ring-0">
+        <CardHeader className="px-0">
+          <p className="text-xs font-semibold uppercase tracking-widest text-emerald-700">
+            Tu juego
+          </p>
+          <CardTitle className="text-2xl tracking-tight">Dashboard</CardTitle>
+          <CardDescription className="flex flex-wrap items-center gap-2">
+            Evolución de tu juego
+            <Badge variant="outline" className="border-emerald-200 text-emerald-800">
+              {dashboardRounds.length}{" "}
+              {dashboardRounds.length === 1 ? "ronda" : "rondas"}
+            </Badge>
+          </CardDescription>
+        </CardHeader>
+      </Card>
 
       <Dashboard rounds={dashboardRounds} />
     </main>

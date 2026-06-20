@@ -6,10 +6,13 @@ import { createClient } from "@/lib/supabase/server";
 
 export default async function EditarRondaPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ roundId: string }>;
+  searchParams: Promise<{ hole?: string }>;
 }) {
   const { roundId } = await params;
+  const { hole } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -31,15 +34,29 @@ export default async function EditarRondaPage({
     redirect("/historial");
   }
 
+  const sortedHoles = [...round.courses.course_holes].sort(
+    (a, b) => a.number - b.number,
+  );
+
   const sortedRound: RoundWithDetails = {
     ...(round as RoundWithDetails),
     courses: {
       ...round.courses,
-      course_holes: [...round.courses.course_holes].sort(
-        (a, b) => a.number - b.number,
-      ),
+      course_holes: sortedHoles,
     },
   };
 
-  return <EditRoundFlow round={sortedRound} />;
+  const parsedHole = hole ? Number.parseInt(hole, 10) : Number.NaN;
+  const hasInitialHole =
+    Number.isInteger(parsedHole) &&
+    parsedHole >= 0 &&
+    parsedHole < sortedHoles.length;
+
+  return (
+    <EditRoundFlow
+      round={sortedRound}
+      initialHoleIndex={hasInitialHole ? parsedHole : 0}
+      initialScreen={hasInitialHole ? "hole" : "picker"}
+    />
+  );
 }
